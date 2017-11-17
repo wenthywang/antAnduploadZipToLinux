@@ -1,12 +1,12 @@
 package conf;
 
 public class ServerEnv {
-	String ip = "172.16.54.76";
+	public static String ip = "172.16.54.76";
 	int port = 22;
 	String user = "root";
-	String password = "suntek";
+	public static  String password = "suntek";
 
-	String dest = "/usr/local/jiaxin_gw_container-1.0";
+	public static String dest = "/usr/local/jiaxin_gw_container-1.0";
 	String destMod = dest + "/mod";
 	String destLog = dest + "/log";
 

@@ -3,10 +3,11 @@ package caller;
 import base.Single;
 import modules.Modules;
 
-public class GwConfig {
+public class GwDataConf {
 
 	public static void main(String[] args) {
-		Single.app_76 = Modules.M_76.jiaxin_gw_config;
+		
+		Single.app_74 = Modules.M_74.jiaxin_gw_dataconf;
 		Single.doBuild = true;
 		Single.onlyReboot = false;
 		Single.clearLog = true;

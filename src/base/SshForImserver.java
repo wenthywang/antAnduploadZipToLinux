@@ -25,7 +25,7 @@ import expect4j.matches.Match;
 import expect4j.matches.RegExpMatch;
 import expect4j.matches.TimeoutMatch;
 
-public class Ssh {
+public class SshForImserver {
 	private ServerEnv senv = new ServerEnv();
 
 	private Session session;
@@ -46,7 +46,7 @@ public class Ssh {
 
 	public static String[] errorMsg = new String[] { "could not acquire the config lock " };
 
-	public Ssh() {
+	public SshForImserver() {
 		expect = getExpect();
 	}
 
@@ -149,7 +149,7 @@ public class Ssh {
 				System.out.println("----------------------------------------------");
 				isSuccess = isSuccess(lstPattern, strCmd);
 				System.out.println(buffer.toString().toLowerCase());
-				Thread.sleep(100);
+				Thread.sleep(1000);
 
 			}
 			// 防止最后一个命令执行不了
@@ -225,7 +225,7 @@ public class Ssh {
 		}
 	}
 
-	public boolean uploadFile(String fileName) {
+	public boolean uploadFile(String fileName,boolean upload_imserver_and_lib_core) {
 		Connection con = new Connection(senv.getIp(), senv.getPort());
 		try {
 			con.connect();
@@ -233,8 +233,14 @@ public class Ssh {
 			boolean isAuthed = con.authenticateWithPassword(senv.getUser(), senv.getPassword());
 			if (isAuthed) {
 				SCPClient scpClient = con.createSCPClient();
-				System.out.println("now to upload file " + fileName + " to server path " + senv.getDestMod());
-				scpClient.put(fileName, senv.getDestMod());
+				String path= ServerEnv.dest+"/plugins/";
+				if(upload_imserver_and_lib_core){
+					path= ServerEnv.dest+"/lib/";
+					scpClient.put(fileName, path);
+				}else{
+					scpClient.put(fileName, path);
+				}
+				System.out.println("now to upload file " + fileName + " to server path " + path);
 				System.out.println("file upload success.");
 				return true;
 			} else {
@@ -249,26 +255,25 @@ public class Ssh {
 
 	public List<String> getCmdList(boolean deleteLog, String appName, int appCode, boolean onlyReboot) {
 		List<String> cmdList = new ArrayList<String>();
-		if (!onlyReboot) {
-			cmdList.add("cd " + senv.getDestMod());
-			cmdList.add("rm -rf " + appName);
-		}
+//		if (!onlyReboot) {
+//			cmdList.add("cd " + ServerEnv.dest);
+//			cmdList.add("rm -rf " + appName);
+//		}
+		cmdList.add("cd " + ServerEnv.dest);
 		if (deleteLog) {
-			cmdList.add("cd " + senv.getDestLog());
-			cmdList.add("> " + appName + ".log");
-			cmdList.add("> " + appName + ".out");
-			cmdList.add("> " + appName + "_3rdparty.log");
-			cmdList.add("> " + appName + "_dubbo.log");
+			cmdList.add("cd logs");
+			cmdList.add("> imserver_out.log");
+			cmdList.add("> debug.log");
+			cmdList.add("> info.log");
+			cmdList.add("> warn.log");
+			cmdList.add("> error.log");
+
 		}
-		cmdList.add("cd " + senv.getDest());
+		cmdList.add("cd " + ServerEnv.dest);
 		cmdList.add("./admin.sh");
-		cmdList.add("1");
 		cmdList.add("3");
-		cmdList.add(String.valueOf(appCode));
 		cmdList.add("y");
 		cmdList.add("2");
-		cmdList.add(String.valueOf(appCode));
-		cmdList.add(String.valueOf(appCode));
 		return cmdList;
 	}
 
@@ -293,7 +298,7 @@ public class Ssh {
 			boolean isAuthed = con.authenticateWithPassword(senv.getUser(), senv.getPassword());
 			if (isAuthed) {
 				SCPClient scpClient = con.createSCPClient();
-				scpClient.get(senv.getDestLog() + "/" + appName + ".out", LocalEnv.tempLocalLog);
+				scpClient.get(ServerEnv.dest + "/logs/imserver_out.log", LocalEnv.tempLocalLog+"/");
 				return true;
 			} else {
 				System.out.println("---error user password for scp");
@@ -306,82 +311,5 @@ public class Ssh {
 	}
 
 
-
-	/**
-	 * 执行配置命令
-	 * 
-	 * @param commands
-	 *            要执行的命令，为字符数组
-	 * @return 执行是否成功
-	 */
-	public boolean executeCommands2(String[] commands) {
-		// 如果expect返回为0，说明登入没有成功
-		if (expect == null) {
-			return false;
-		}
-
-		Closure closure = new Closure() {
-			public void run(ExpectState expectState) throws Exception {
-				String text = expectState.getBuffer();
-				if (text.contains("|State|")) {
-					buffer.append(text);
-				}
-			}
-		};
-		List<Match> lstPattern = new ArrayList<Match>();
-		String[] regEx = linuxPromptRegEx;
-		if (regEx != null && regEx.length > 0) {
-			synchronized (regEx) {
-				for (String regexElement : regEx) {
-					try {
-						RegExpMatch mat = new RegExpMatch(regexElement, closure);
-						lstPattern.add(mat);
-					} catch (MalformedPatternException e) {
-						return false;
-					} catch (Exception e) {
-						return false;
-					}
-				}
-				lstPattern.add(new EofMatch(new Closure() {
-					public void run(ExpectState state) {
-
-					}
-				}));
-				lstPattern.add(new TimeoutMatch(defaultTimeOut, new Closure() {
-					public void run(ExpectState state) {
-
-					}
-				}));
-			}
-		}
-		try {
-			boolean isSuccess = true;
-			for (String strCmd : commands) {
-				// System.out.println("----------------------------------------------");
-				isSuccess = isSuccess(lstPattern, strCmd);
-				// System.out.println(buffer.toString().toLowerCase());
-				// if(strCmd.equals("./admin.sh")){
-				Thread.sleep(2000);
-				// }else{
-				// Thread.sleep(100);
-				// }
-			}
-			// 防止最后一个命令执行不了
-			isSuccess = !checkResult(expect.expect(lstPattern));
-
-			// 找不到错误信息标示成功
-			String response = buffer.toString().toLowerCase();
-			for (String msg : errorMsg) {
-				if (response.indexOf(msg) > -1) {
-					return false;
-				}
-			}
-
-			return isSuccess;
-		} catch (Exception ex) {
-			ex.printStackTrace();
-			return false;
-		}
-	}
 
 }

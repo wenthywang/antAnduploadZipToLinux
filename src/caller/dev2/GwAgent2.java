@@ -1,12 +1,13 @@
-package caller;
+package caller.dev2;
 
 import base.Single;
 import modules.Modules;
 
-public class GwConfig {
+public class GwAgent2 {
 
 	public static void main(String[] args) {
-		Single.app_76 = Modules.M_76.jiaxin_gw_config;
+		
+		Single.app_63 = Modules.M_70_63.jiaxin_web_agent;
 		Single.doBuild = true;
 		Single.onlyReboot = false;
 		Single.clearLog = true;

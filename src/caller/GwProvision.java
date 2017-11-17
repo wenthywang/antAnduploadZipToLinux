@@ -1,12 +1,12 @@
 package caller;
 
-import modules.Modules;
 import base.Single;
+import modules.Modules;
 
 public class GwProvision {
 
 	public static void main(String[] args) {
-		Single.app = Modules.M.jiaxin_gw_provision;
+		Single.app_76 = Modules.M_76.jiaxin_gw_provision;
 		Single.doBuild = true;
 		Single.onlyReboot = false;
 		Single.clearLog = true;

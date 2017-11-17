@@ -1,12 +1,13 @@
 package caller;
 
-import modules.Modules;
 import base.Single;
+import modules.Modules;
 
 public class GwSchedule {
 
 	public static void main(String[] args) {
-		Single.app = Modules.M.jiaxin_gw_schedule;
+		
+		Single.app_74 = Modules.M_74.jiaxin_gw_schedule;
 		Single.doBuild = true;
 		Single.onlyReboot = false;
 		Single.clearLog = true;
